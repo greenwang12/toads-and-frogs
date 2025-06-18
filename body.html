@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Toads and Frogs</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Fredoka&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="title-container">
+  <img src="title.png" alt="Toads and Frogs" class="title-image" />
+</div>
+
+  <div id="gameSettings">
+    <div class="input-group">
+      <label for="numCells">Number of Grids:</label>
+      <input type="number" id="numCells" min="3" max="15" value="7" />
+    </div>
+
+    <div class="input-group">
+      <label for="numPlayers">Number of Players:</label>
+      <select id="numPlayers">
+        <option value="1">1 Player</option>
+        <option value="2">2 Players</option>
+      </select>
+    </div>
+
+    <button id="startBtn" class="bubble-button" style="margin-top: 40px;">Start</button>
+  </div>
+
+  <div id="rulesSection" style="display: none; margin-top: 30px;">
+    <div class="rules-container">
+      <button onclick="toggleRules()">📜 Show/Hide Game Rules</button>
+      <ul id="gameRules" style="display: none;">
+        <h3>Game Rules: Toads and Frogs</h3>
+        <li><strong>Players:</strong> 2 (or 1 vs Computer)</li>
+        <li><strong>Objective:</strong> Move all your pieces forward and block your opponent.</li>
+        <li>Toads 🐢 start on the left and move right.</li>
+        <li>Frogs 🐸 start on the right and move left.</li>
+        <li>You can move to an adjacent empty cell or jump over an opponent.</li>
+        <li>No double jumps allowed.</li>
+        <li>Toads go first.</li>
+        <li>The game ends when a player has no valid move — the other wins!</li>
+      </ul>
+    </div>
+  </div>
+
+  <div id="gameArea" style="display: none; flex-direction: column; align-items: center;">
+    <div id="status"></div>
+    <div id="board" class="board"></div>
+  </div>
+
+  <div>
+    <button id="restartBtn" style="display: none; margin-top: 30px;" class="bubble-button">Restart Game</button>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
