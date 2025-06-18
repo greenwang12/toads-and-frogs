@@ -4,6 +4,7 @@ let gameOver = false;
 let numPlayers = 1;
 let currentPlayer = 'T';
 
+
 const boardDiv = document.getElementById('board');
 const statusP = document.getElementById('status');
 
