@@ -204,3 +204,9 @@ body {
   height: auto;
   animation: bounce 2s infinite;
 }
+.status-icon {
+  width: 24px;
+  height: 24px;
+  vertical-align: middle;
+  margin: 0 4px;
+}

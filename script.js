@@ -33,7 +33,12 @@ function setupGame() {
   document.getElementById('restartBtn').disabled = false;
 
   renderBoard();
-  statusP.textContent = `Your move: Click a ${currentPlayer === 'T' ? '🐢 Toad' : '🐸 Frog'}.`;
+  statusP.innerHTML = `Your move: Click a ${
+  currentPlayer === 'T'
+    ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
+    : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
+}.`;
+
 }
 
 function renderBoard() {
@@ -96,13 +101,16 @@ function tryMove(i) {
   checkGameOver();
 
   if (!gameOver) {
-    if (numPlayers === 1) {
-      setTimeout(frogMove, 300);
-    } else {
-      switchPlayer();
-      renderBoard();
-    }
+  if (numPlayers === 1) {
+    // 💡 ADD THIS BEFORE the AI plays
+    statusP.innerHTML = `<img src="frogchar.png" class="status-icon"> Frog turn!`;
+
+    setTimeout(frogMove, 300);
+  } else {
+    switchPlayer();
+    renderBoard();
   }
+}
 }
 
 function frogMove() {
@@ -156,7 +164,12 @@ function evaluateBoard(tempBoard) {
 
 function switchPlayer() {
   currentPlayer = currentPlayer === 'T' ? 'F' : 'T';
-  statusP.textContent = `Your move: Click a ${currentPlayer === 'T' ? '🐢 Toad' : '🐸 Frog'}.`;
+  statusP.innerHTML = `Your move: Click a ${
+  currentPlayer==='T'
+    ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
+    : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
+}.`;
+
 }
 
 function hasValidMove(char, dir) {
@@ -179,18 +192,28 @@ function checkGameOver() {
   const frogsCanMove = hasValidMove('F', -1);
 
   if (!toadsCanMove && !frogsCanMove) {
-    statusP.textContent = `🎉 ${currentPlayer === 'T' ? '🐢 Toads' : '🐸 Frogs'} made the last move and win!`;
+    statusP.innerHTML = `🎉 ${
+  currentPlayer === 'T'
+    ? '<img src="toadschar.png" alt="Toads" class="status-icon"> Toads'
+    : '<img src="frogchar.png" alt="Frogs" class="status-icon"> Frogs'
+} win!`;
+
     endGame();
   } else if (!toadsCanMove) {
-    statusP.textContent = '🐸 Frogs win!';
+     statusP.innerHTML = `🎉 <img src="frogchar.png" alt="Frogs" class="status-icon"> Frogs win!`;
     endGame();
   } else if (!frogsCanMove) {
-    statusP.textContent = '🐢 Toads win!';
+    statusP.innerHTML = `🎉 <img src="toadschar.png" alt="Toads" class="status-icon"> Toads win!`;
     endGame();
   } else if (numPlayers === 2) {
-    statusP.textContent = `Your move: Click a ${currentPlayer === 'T' ? '🐢 Toad' : '🐸 Frog'}.`;
+    statusP.innerHTML = `Your move: Click a ${
+  currentPlayer==='T'
+    ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
+    : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
+}.`;
+
   } else {
-    statusP.textContent = 'Your move: Click a 🐢 Toad.';
+    statusP.innerHTML = `Your move: Click a <img src="toadschar.png" alt="Toad" class="status-icon"> Toad.`;
   }
 }
 
@@ -215,6 +238,11 @@ function restartGame() {
 function toggleRules() {
   const rules = document.getElementById("gameRules");
   rules.style.display = rules.style.display === "none" ? "block" : "none";
+}
+
+function updateAITurnStatus() {
+  statusP.innerHTML = `<img src="frogchar.png" class="status-icon"> Frog turn!`;
+  
 }
 
 document.addEventListener('DOMContentLoaded', () => {
