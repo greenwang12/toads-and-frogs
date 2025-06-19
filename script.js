@@ -3,7 +3,7 @@ let board = [];
 let gameOver = false;
 let numPlayers = 1;
 let currentPlayer = 'T';
-
+let lastMover = null; // 'T' or 'F'
 
 const boardDiv = document.getElementById('board');
 const statusP = document.getElementById('status');
@@ -97,7 +97,20 @@ function tryMove(i) {
     }
   }
 
+  lastMover = board[i];
   renderBoard();
+
+  const frogsCanMove = hasValidMove('F', -1);
+  if (!frogsCanMove) {
+    const animationDiv = document.getElementById('winnerAnimation');
+    statusP.innerHTML = `🎉 <img src="toadschar.png" class="status-icon"> Toads win!`;
+    if (animationDiv) {
+      animationDiv.style.display = 'block';
+      animationDiv.innerHTML = `<img src="toadschar.png" alt="Winner">`;
+    }
+    endGame();
+    return;
+  }
   checkGameOver();
 
   if (!gameOver) {
@@ -148,6 +161,36 @@ function frogMove() {
   }
 }
 
+function frogFinalMoveAndWin() {
+  let bestMove = null;
+  let bestScore = -Infinity;
+
+  for (let i = board.length - 1; i >= 0; i--) {
+    if (board[i] === 'F') {
+      if (i - 2 >= 0 && board[i - 1] === 'T' && board[i - 2] === '_') {
+        bestMove = { from: i, to: i - 2 };
+        break;
+      } else if (i - 1 >= 0 && board[i - 1] === '_') {
+        bestMove = { from: i, to: i - 1 };
+        break;
+      }
+    }
+  }
+
+  if (bestMove) {
+    lastMover = 'F';
+    [board[bestMove.from], board[bestMove.to]] = [board[bestMove.to], board[bestMove.from]];
+    renderBoard();
+    const animationDiv = document.getElementById('winnerAnimation');
+    statusP.innerHTML = `🎉 <img src="frogchar.png" class="status-icon"> Frogs win!`;
+    if (animationDiv) {
+      animationDiv.style.display = 'block';
+      animationDiv.innerHTML = `<img src="frogchar.png" alt="Winner">`;
+    }
+    endGame();
+  }
+}
+
 function evaluateBoard(tempBoard) {
   let toadsBlocked = 0;
   for (let i = 0; i < tempBoard.length; i++) {
@@ -186,32 +229,49 @@ function hasValidMove(char, dir) {
   }
   return false;
 }
-
 function checkGameOver() {
   const toadsCanMove = hasValidMove('T', 1);
   const frogsCanMove = hasValidMove('F', -1);
+  const animationDiv = document.getElementById('winnerAnimation');
 
+  // Both stuck → last mover wins
   if (!toadsCanMove && !frogsCanMove) {
-    statusP.innerHTML = `🎉 ${
-  currentPlayer === 'T'
-    ? '<img src="toadschar.png" alt="Toads" class="status-icon"> Toads'
-    : '<img src="frogchar.png" alt="Frogs" class="status-icon"> Frogs'
-} win!`;
+    const winner = lastMover === 'T' ? 'Toads' : 'Frogs';
+    const img = lastMover === 'T' ? 'toadschar.png' : 'frogchar.png';
+    statusP.innerHTML = `🎉 Both stuck! <img src="${img}" class="status-icon"> ${winner} win!`;
+    if (animationDiv) {
+      animationDiv.style.display = 'block';
+      animationDiv.innerHTML = `<img src="${img}" alt="Winner">`;
+    }
+    endGame();
+    return;
+  }
 
-    endGame();
-  } else if (!toadsCanMove) {
-     statusP.innerHTML = `🎉 <img src="frogchar.png" alt="Frogs" class="status-icon"> Frogs win!`;
-    endGame();
-  } else if (!frogsCanMove) {
-    statusP.innerHTML = `🎉 <img src="toadschar.png" alt="Toads" class="status-icon"> Toads win!`;
-    endGame();
-  } else if (numPlayers === 2) {
+  // If Toads are stuck → Frogs make 1 final move then win
+  if (!toadsCanMove && frogsCanMove) {
+    if (numPlayers === 1) {
+      setTimeout(() => {
+        frogFinalMoveAndWin();
+      }, 300);
+    } else if (currentPlayer === 'F') {
+      statusP.innerHTML = `<img src="frogchar.png" class="status-icon"> Frog turn!`;
+    }
+    return;
+  }
+
+  // If Frogs are stuck → Toads make 1 final move then win
+  if (!frogsCanMove && toadsCanMove) {
+    statusP.innerHTML = `<img src="toadschar.png" class="status-icon"> Toad turn!`;
+    return;
+  }
+
+  // Otherwise, game continues
+  if (numPlayers === 2) {
     statusP.innerHTML = `Your move: Click a ${
-  currentPlayer==='T'
-    ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
-    : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
-}.`;
-
+      currentPlayer === 'T'
+        ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
+        : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
+    }.`;
   } else {
     statusP.innerHTML = `Your move: Click a <img src="toadschar.png" alt="Toad" class="status-icon"> Toad.`;
   }
