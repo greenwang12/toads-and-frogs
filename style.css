@@ -1,13 +1,11 @@
 body {
   font-family: sans-serif;
   text-align: center;
-  background-image: url(bg.jpg);
-  background-size: cover;
-  background-repeat: no-repeat;
-  background-position: center;
-  background-attachment: fixed;
   margin: 0;
   padding: 20px;
+  position: relative;
+  background: none;
+  z-index: 0;
 }
 
 .title {
@@ -209,4 +207,20 @@ body {
   height: 24px;
   vertical-align: middle;
   margin: 0 4px;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url(bg.jpg);
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-attachment: fixed;
+  opacity: 0.6; /* Change this to adjust opacity */
+  z-index: -1;
 }
