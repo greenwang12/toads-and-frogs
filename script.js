@@ -1,12 +1,13 @@
-let n, m;
+// Toads and Frogs Game - Fully Fixed Logic with Clear Status Wording
 let board = [];
 let gameOver = false;
 let numPlayers = 1;
 let currentPlayer = 'T';
-let lastMover = null; // 'T' or 'F'
+let lastMover = null;
 
 const boardDiv = document.getElementById('board');
 const statusP = document.getElementById('status');
+const winnerAnimation = document.getElementById('winnerAnimation');
 
 function setupGame() {
   document.getElementById("gameSettings").style.display = "none";
@@ -20,25 +21,17 @@ function setupGame() {
   }
 
   numPlayers = parseInt(document.getElementById('numPlayers').value);
-
   let pieceCount = Math.floor(totalCells / 3);
   let emptyCount = totalCells - pieceCount * 2;
-
-  board = Array(pieceCount).fill('T')
-    .concat(Array(emptyCount).fill('_'))
-    .concat(Array(pieceCount).fill('F'));
+  board = Array(pieceCount).fill('T').concat(Array(emptyCount).fill('_')).concat(Array(pieceCount).fill('F'));
 
   gameOver = false;
   currentPlayer = 'T';
+  lastMover = null;
   document.getElementById('restartBtn').disabled = false;
 
   renderBoard();
-  statusP.innerHTML = `Your move: Click a ${
-  currentPlayer === 'T'
-    ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
-    : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
-}.`;
-
+  updateStatus();
 }
 
 function renderBoard() {
@@ -46,25 +39,16 @@ function renderBoard() {
   board.forEach((cell, index) => {
     const div = document.createElement('div');
     div.className = 'cell';
-  if (cell === 'T') {
-  const img = document.createElement('img');
-  img.src = 'toadschar.png'; // place 'toad.png' in the same folder as your HTML
-  img.alt = 'Toad';
-  img.className = 'cell-img';
-  div.appendChild(img);
-} else if (cell === 'F') {
-  const img = document.createElement('img');
-  img.src = 'frogchar.png'; // place 'frog.png' in the same folder as your HTML
-  img.alt = 'Frog';
-  img.className = 'cell-img';
-  div.appendChild(img);
-}
-
-
-    if (!gameOver) {
-      if ((numPlayers === 1 && cell === 'T') || (numPlayers === 2 && cell === currentPlayer)) {
-        div.addEventListener('click', () => tryMove(index));
-      }
+    if (cell === 'T' || cell === 'F') {
+      const img = document.createElement('img');
+      img.src = cell === 'T' ? 'toadschar.png' : 'frogchar.png';
+      img.alt = cell === 'T' ? 'Toad' : 'Frog';
+      img.className = 'cell-img';
+      div.appendChild(img);
+    }
+    if (!gameOver && ((numPlayers === 1 && ((currentPlayer === 'T' && cell === 'T') || (currentPlayer === 'F' && cell === 'F')))
+        || (numPlayers === 2 && cell === currentPlayer))) {
+      div.addEventListener('click', () => tryMove(index));
     }
     boardDiv.appendChild(div);
   });
@@ -72,78 +56,73 @@ function renderBoard() {
 
 function tryMove(i) {
   if (gameOver) return;
-  if (numPlayers === 2 && board[i] !== currentPlayer) {
-    statusP.textContent = `❌ It's ${currentPlayer === 'T' ? 'Toad 🐢' : 'Frog 🐸'}'s turn!`;
+  if (board[i] !== currentPlayer) return;
+
+  const moved = attemptMove(i);
+  if (!moved) {
+    statusP.textContent = `❌ Invalid move! That ${board[i] === 'T' ? 'Toad' : 'Frog'} can’t move from there.`;
     return;
   }
 
-  if (board[i] === 'T') {
-    if (i + 1 < board.length && board[i + 1] === '_') {
-      [board[i], board[i + 1]] = [board[i + 1], board[i]];
-    } else if (i + 2 < board.length && board[i + 1] === 'F' && board[i + 2] === '_') {
-      [board[i], board[i + 2]] = [board[i + 2], board[i]];
-    } else {
-      statusP.textContent = '❌ Invalid move for Toad!';
-      return;
-    }
-  } else if (board[i] === 'F') {
-    if (i - 1 >= 0 && board[i - 1] === '_') {
-      [board[i], board[i - 1]] = [board[i - 1], board[i]];
-    } else if (i - 2 >= 0 && board[i - 1] === 'T' && board[i - 2] === '_') {
-      [board[i], board[i - 2]] = [board[i - 2], board[i]];
-    } else {
-      statusP.textContent = '❌ Invalid move for Frog!';
-      return;
-    }
-  }
-
-  lastMover = board[i];
   renderBoard();
 
-  const frogsCanMove = hasValidMove('F', -1);
-  if (!frogsCanMove) {
-    const animationDiv = document.getElementById('winnerAnimation');
-    statusP.innerHTML = `🎉 <img src="toadschar.png" class="status-icon"> Toads win!`;
-    if (animationDiv) {
-      animationDiv.style.display = 'block';
-      animationDiv.innerHTML = `<img src="toadschar.png" alt="Winner">`;
-    }
-    endGame();
-    return;
-  }
-  checkGameOver();
-
-  if (!gameOver) {
   if (numPlayers === 1) {
-    // 💡 ADD THIS BEFORE the AI plays
-    statusP.innerHTML = `<img src="frogchar.png" class="status-icon"> Frog turn!`;
-
-    setTimeout(frogMove, 300);
+    if (currentPlayer === 'T') {
+      currentPlayer = 'F';
+      updateStatus();
+      setTimeout(() => frogMoveOnce(), 300);
+    }
   } else {
-    switchPlayer();
-    renderBoard();
+    handle2Player();
   }
 }
+
+function attemptMove(i) {
+  let moved = false;
+  const piece = board[i];
+
+  if (piece === 'T') {
+    if (i + 1 < board.length && board[i + 1] === '_') {
+      [board[i], board[i + 1]] = [board[i + 1], board[i]];
+      moved = true;
+    } else if (i + 2 < board.length && board[i + 1] === 'F' && board[i + 2] === '_') {
+      [board[i], board[i + 2]] = [board[i + 2], board[i]];
+      moved = true;
+    }
+  } else if (piece === 'F') {
+    if (i - 1 >= 0 && board[i - 1] === '_') {
+      [board[i], board[i - 1]] = [board[i - 1], board[i]];
+      moved = true;
+    } else if (i - 2 >= 0 && board[i - 1] === 'T' && board[i - 2] === '_') {
+      [board[i], board[i - 2]] = [board[i - 2], board[i]];
+      moved = true;
+    }
+  }
+
+  if (moved) lastMover = piece;
+  return moved;
 }
 
-function frogMove() {
+function frogMoveOnce() {
+  if (gameOver) return;
+
   let bestMove = null;
   let bestScore = -Infinity;
 
   for (let i = board.length - 1; i >= 0; i--) {
     if (board[i] === 'F') {
       if (i - 2 >= 0 && board[i - 1] === 'T' && board[i - 2] === '_') {
-        const testBoard = [...board];
-        [testBoard[i], testBoard[i - 2]] = [testBoard[i - 2], testBoard[i]];
-        const score = evaluateBoard(testBoard);
+        const test = [...board];
+        [test[i], test[i - 2]] = [test[i - 2], test[i]];
+        const score = evaluateBoard(test);
         if (score > bestScore) {
           bestScore = score;
           bestMove = { from: i, to: i - 2 };
         }
       } else if (i - 1 >= 0 && board[i - 1] === '_') {
-        const testBoard = [...board];
-        [testBoard[i], testBoard[i - 1]] = [testBoard[i - 1], testBoard[i]];
-        const score = evaluateBoard(testBoard);
+        const test = [...board];
+        [test[i], test[i - 1]] = [test[i - 1], test[i]];
+        const score = evaluateBoard(test);
         if (score > bestScore) {
           bestScore = score;
           bestMove = { from: i, to: i - 1 };
@@ -153,66 +132,49 @@ function frogMove() {
   }
 
   if (bestMove) {
+    lastMover = 'F';
     [board[bestMove.from], board[bestMove.to]] = [board[bestMove.to], board[bestMove.from]];
+    currentPlayer = 'T';
     renderBoard();
-    checkGameOver();
+    const toadsCanMove = hasValidMove('T', 1);
+    const frogsCanMove = hasValidMove('F', -1);
+    if (!toadsCanMove && !frogsCanMove) {
+      announceWinner();
+    } else if (!toadsCanMove && frogsCanMove) {
+      setTimeout(() => frogFinalMoveAndWin(), 300);
+    } else {
+      updateStatus();
+    }
   } else {
-    checkGameOver();
+    announceWinner();
   }
 }
 
 function frogFinalMoveAndWin() {
-  let bestMove = null;
-  let bestScore = -Infinity;
-
   for (let i = board.length - 1; i >= 0; i--) {
     if (board[i] === 'F') {
       if (i - 2 >= 0 && board[i - 1] === 'T' && board[i - 2] === '_') {
-        bestMove = { from: i, to: i - 2 };
+        [board[i], board[i - 2]] = [board[i - 2], board[i]];
         break;
       } else if (i - 1 >= 0 && board[i - 1] === '_') {
-        bestMove = { from: i, to: i - 1 };
+        [board[i], board[i - 1]] = [board[i - 1], board[i]];
         break;
       }
     }
   }
-
-  if (bestMove) {
-    lastMover = 'F';
-    [board[bestMove.from], board[bestMove.to]] = [board[bestMove.to], board[bestMove.from]];
-    renderBoard();
-    const animationDiv = document.getElementById('winnerAnimation');
-    statusP.innerHTML = `🎉 <img src="frogchar.png" class="status-icon"> Frogs win!`;
-    if (animationDiv) {
-      animationDiv.style.display = 'block';
-      animationDiv.innerHTML = `<img src="frogchar.png" alt="Winner">`;
-    }
-    endGame();
-  }
+  renderBoard();
+  declareWinner('F');
 }
 
-function evaluateBoard(tempBoard) {
-  let toadsBlocked = 0;
-  for (let i = 0; i < tempBoard.length; i++) {
-    if (tempBoard[i] === 'T') {
-      const next1 = i + 1 < tempBoard.length ? tempBoard[i + 1] : null;
-      const next2 = i + 2 < tempBoard.length ? tempBoard[i + 2] : null;
-      if (next1 !== '_' && (next2 !== '_' || next1 === 'T')) {
-        toadsBlocked++;
-      }
-    }
-  }
-  return toadsBlocked;
-}
+function handle2Player() {
+  const toadsCanMove = hasValidMove('T', 1);
+  const frogsCanMove = hasValidMove('F', -1);
 
-function switchPlayer() {
-  currentPlayer = currentPlayer === 'T' ? 'F' : 'T';
-  statusP.innerHTML = `Your move: Click a ${
-  currentPlayer==='T'
-    ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
-    : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
-}.`;
+  if (!toadsCanMove && !frogsCanMove) return announceWinner();
+  if (currentPlayer === 'T' && !frogsCanMove) return declareWinner('T');
+  if (currentPlayer === 'F' && !toadsCanMove) return declareWinner('F');
 
+  switchPlayer();
 }
 
 function hasValidMove(char, dir) {
@@ -229,52 +191,47 @@ function hasValidMove(char, dir) {
   }
   return false;
 }
-function checkGameOver() {
-  const toadsCanMove = hasValidMove('T', 1);
-  const frogsCanMove = hasValidMove('F', -1);
-  const animationDiv = document.getElementById('winnerAnimation');
 
-  // Both stuck → last mover wins
-  if (!toadsCanMove && !frogsCanMove) {
-    const winner = lastMover === 'T' ? 'Toads' : 'Frogs';
-    const img = lastMover === 'T' ? 'toadschar.png' : 'frogchar.png';
-    statusP.innerHTML = `🎉 Both stuck! <img src="${img}" class="status-icon"> ${winner} win!`;
-    if (animationDiv) {
-      animationDiv.style.display = 'block';
-      animationDiv.innerHTML = `<img src="${img}" alt="Winner">`;
+function evaluateBoard(tempBoard) {
+  return tempBoard.reduce((count, val, i) => {
+    if (val === 'T') {
+      const n1 = tempBoard[i + 1];
+      const n2 = tempBoard[i + 2];
+      if (n1 !== '' && (n2 !== '' || n1 === 'T')) count++;
     }
-    endGame();
-    return;
-  }
+    return count;
+  }, 0);
+}
 
-  // If Toads are stuck → Frogs make 1 final move then win
-  if (!toadsCanMove && frogsCanMove) {
-    if (numPlayers === 1) {
-      setTimeout(() => {
-        frogFinalMoveAndWin();
-      }, 300);
-    } else if (currentPlayer === 'F') {
-      statusP.innerHTML = `<img src="frogchar.png" class="status-icon"> Frog turn!`;
-    }
-    return;
-  }
+function switchPlayer() {
+  currentPlayer = currentPlayer === 'T' ? 'F' : 'T';
+  updateStatus();
+  renderBoard();
+}
 
-  // If Frogs are stuck → Toads make 1 final move then win
-  if (!frogsCanMove && toadsCanMove) {
-    statusP.innerHTML = `<img src="toadschar.png" class="status-icon"> Toad turn!`;
-    return;
-  }
+function updateStatus() {
+  if (gameOver) return;
+  statusP.innerHTML = `It’s <img src="${currentPlayer === 'T' ? 'toadschar.png' : 'frogchar.png'}" class="status-icon"> <strong>${currentPlayer === 'T' ? 'Toad' : 'Frog'}</strong>’s turn! Click to move.`;
+}
 
-  // Otherwise, game continues
-  if (numPlayers === 2) {
-    statusP.innerHTML = `Your move: Click a ${
-      currentPlayer === 'T'
-        ? '<img src="toadschar.png" alt="Toad" class="status-icon"> Toad'
-        : '<img src="frogchar.png" alt="Frog" class="status-icon"> Frog'
-    }.`;
-  } else {
-    statusP.innerHTML = `Your move: Click a <img src="toadschar.png" alt="Toad" class="status-icon"> Toad.`;
+function declareWinner(winner) {
+  const img = winner === 'T' ? 'toadschar.png' : 'frogchar.png';
+  statusP.innerHTML = `🎉 <strong>${winner === 'T' ? 'Toads' : 'Frogs'}</strong> win the game! <img src="${img}" class="status-icon">`;
+  if (winnerAnimation) {
+    winnerAnimation.style.display = 'block';
+    winnerAnimation.innerHTML = `<img src="${img}" alt="Winner">`;
   }
+  endGame();
+}
+
+function announceWinner() {
+  const img = lastMover === 'T' ? 'toadschar.png' : 'frogchar.png';
+  statusP.innerHTML = `🎉 Game over! No valid moves left. <img src="${img}" class="status-icon"> <strong>${lastMover === 'T' ? 'Toads' : 'Frogs'}</strong> win by last successful move!`;
+  if (winnerAnimation) {
+    winnerAnimation.style.display = 'block';
+    winnerAnimation.innerHTML = `<img src="${img}" alt="Winner">`;
+  }
+  endGame();
 }
 
 function endGame() {
@@ -284,7 +241,7 @@ function endGame() {
 }
 
 function restartGame() {
-  document.getElementById("gameSettings").style.display = "block";
+  document.getElementById("gameSettings").style.display = "flex";
   document.getElementById("gameArea").style.display = "none";
   document.getElementById("restartBtn").style.display = "none";
   document.getElementById("rulesSection").style.display = "none";
@@ -292,7 +249,6 @@ function restartGame() {
   boardDiv.innerHTML = '';
   document.getElementById('numCells').value = '7';
   document.getElementById('numPlayers').value = '1';
-
 }
 
 function toggleRules() {
@@ -300,12 +256,16 @@ function toggleRules() {
   rules.style.display = rules.style.display === "none" ? "block" : "none";
 }
 
-function updateAITurnStatus() {
-  statusP.innerHTML = `<img src="frogchar.png" class="status-icon"> Frog turn!`;
-  
-}
-
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('restartBtn').addEventListener('click', restartGame);
   document.getElementById('startBtn').addEventListener('click', setupGame);
+
+  let mouseDown = false;
+  document.addEventListener('mousedown', e => {
+    if (e.detail > 1) e.preventDefault();
+    else mouseDown = true;
+  }, true);
+  document.addEventListener('mousemove', e => mouseDown && e.preventDefault(), true);
+  document.addEventListener('mouseup', () => mouseDown = false, true);
+  document.addEventListener('dragstart', e => e.preventDefault());
 });
